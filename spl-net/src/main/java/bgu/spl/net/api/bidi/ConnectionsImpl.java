@@ -26,7 +26,8 @@ public class ConnectionsImpl<T> implements Connections<T>{
 
     }
 
-    public void register(Integer connectionId, ConnectionHandler<T> connectionHandler){
+    public int register(Integer connectionId, ConnectionHandler<T> connectionHandler){
         this.map.put(connectionId, connectionHandler);
+        return 3333333;
     }
 }
