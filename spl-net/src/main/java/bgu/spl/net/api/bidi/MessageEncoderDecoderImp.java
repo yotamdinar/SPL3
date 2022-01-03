@@ -17,7 +17,7 @@ public class MessageEncoderDecoderImp implements MessageEncoderDecoder<String> {
         bytes[1] = (byte)(OpCode & 0xFF);
         for(int i = 2; i < message.length(); i++){
             bytes[i] = (byte) message.charAt(i);
-        }
+        }/////////////////////////////////////////////////////////need to add here the delimiters '0' or '\0'....
         bytes[bytes.length] = (byte) ';';
 
         return bytes;

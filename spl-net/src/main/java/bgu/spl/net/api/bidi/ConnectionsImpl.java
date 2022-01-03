@@ -23,11 +23,15 @@ public class ConnectionsImpl<T> implements Connections<T>{
 
     @Override
     public void disconnect(int connectionId) {
-
     }
 
-    public int register(Integer connectionId, ConnectionHandler<T> connectionHandler){
+    public HashMap<Integer, ConnectionHandler<T>> getMap() {
+        return map;
+    }
+
+    public void register(Integer connectionId, ConnectionHandler<T> connectionHandler){
         this.map.put(connectionId, connectionHandler);
-        return 3333333;
     }
+
+
 }

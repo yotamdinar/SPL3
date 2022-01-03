@@ -13,20 +13,21 @@ public class messagingProtocolImp implements BidiMessagingProtocol<String> {
     private int connectionId;
     private ConnectionsImpl Connections;
     Xavi xavi;
-    ConnectionHandler connectionHandler;
+    //ConnectionHandler connectionHandler;
 
     public messagingProtocolImp(Xavi xavi, ConnectionsImpl connections, ConnectionHandler connectionHandler){
         this.Connections = connections;
         this.xavi = xavi;
         this.id = -1;
         this.connectionId = -1;
-        this.connectionHandler = connectionHandler;
+        //this.connectionHandler = connectionHandler; //access to CH through the connections instead
     }
 
     @Override
-    public void start(int connectionId, Connections<String> connections) {
+    public void start(int connectionId, Connections<String> connections) {//////*********************indexing need to be change
         System.out.println("new client connected");
-        this.connectionId = Connections.register(0, connectionHandler );
+        Connections.register(connectionId, connectionHandler );
+        this.connectionId = connectionId;
     }
 
     @Override
