@@ -1,6 +1,5 @@
 package bgu.spl.net.srv;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.List;
 
@@ -102,7 +101,7 @@ public class User {
     }
 
     public int getAge(){
-        throw new NotImplementedException();
+        return -1;
     }
 
     /*All PM messages should be saved to a data structure in the application, along with post messages.
@@ -119,6 +118,6 @@ the republic of Lala-land’*/
      * @return the message after it been filtered from illegal words
      */
     public String filterMessage(String message){
-        throw new NotImplementedException();
+        return"-1";
     }
 }

@@ -40,13 +40,13 @@ public class MessageEncoderDecoderImp implements MessageEncoderDecoder<String> {
         short opCode = bytesToShort(opBytes);
         if(opCode<10)
             stringMessage+= "0";
-        stringMessage += opCode;
+        stringMessage += opCode; //adding here short to string how should i parse it in process?
 
         for(int i = 2; i< bytesMessage.size(); i++){
             stringMessage += (char) ((byte)bytesMessage.get(i));
         }
         stringMessage += ';';
-        return stringMessage;
+        return stringMessage; /*01<Username>+'\0'+<Password>+'\0'+<Birthday>+'\0'*/
     }
 
 
