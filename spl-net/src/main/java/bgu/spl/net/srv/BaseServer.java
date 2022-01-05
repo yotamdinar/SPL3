@@ -2,6 +2,7 @@ package bgu.spl.net.srv;
 
 import bgu.spl.net.api.MessageEncoderDecoder;
 import bgu.spl.net.api.bidi.BidiMessagingProtocol;
+import bgu.spl.net.api.bidi.Connections;
 import bgu.spl.net.api.bidi.ConnectionsImpl;
 
 import java.io.IOException;
@@ -17,12 +18,10 @@ public abstract class BaseServer<T> implements Server<T> {
     private ServerSocket sock;
     //new************************************************************************
     private DataBase dataBase;
-    private ConnectionsImpl connections;
+    private Connections connections;
 
-    public BaseServer(
-            int port,/*newXavi xavi, ConnectionsImplconnections*/
-            Supplier<BidiMessagingProtocol<T>> protocolFactory,
-            Supplier<MessageEncoderDecoder<T>> encdecFactory) {
+    public BaseServer(int port, Supplier<BidiMessagingProtocol<T>> protocolFactory,
+                      Supplier<MessageEncoderDecoder<T>> encdecFactory) {
 
         this.port = port;
         this.protocolFactory = protocolFactory;
@@ -32,6 +31,8 @@ public abstract class BaseServer<T> implements Server<T> {
 
     @Override
     public void serve() {
+        this.dataBase = DataBase.get_instance();
+        connections = dataBase.getConnections();
 
         try (ServerSocket serverSock = new ServerSocket(port)) {
 			System.out.println("Server started");

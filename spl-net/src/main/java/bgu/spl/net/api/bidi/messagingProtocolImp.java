@@ -9,27 +9,24 @@ public class messagingProtocolImp implements BidiMessagingProtocol<String> {
 
 
     //new:
-    private int id;
     private int connectionId;
-    public User client;
-    private ConnectionsImpl Connections;
+    public User user;
+    //private ConnectionsImpl Connections;
+    private Connections<String> connections;
     private DataBase dataBase;
     //ConnectionHandler connectionHandler;
 
-    public messagingProtocolImp( ConnectionsImpl connections/*, ConnectionHandler connectionHandler*/){
+    public messagingProtocolImp( /*ConnectionsImpl connections*/ /*, ConnectionHandler connectionHandler*/){
 
         this.dataBase = DataBase.get_instance();
-        this.Connections = dataBase.getConnectionsImpl();
-        this.id = -1;
-        this.connectionId = -1;
-        //this.connectionHandler = connectionHandler; //access to CH through the connections instead
+        this.connections = dataBase.getConnections();
+        this.connectionId = -1;     //connection id wasn't initiated yet
     }
 
     @Override
-    public void start(int connectionId, Connections<String> connections) {//////*********************indexing need to be change
-        System.out.println("new client connected");
-        //Connections.register(connectionId, connectionHandler );
+    public void start(int connectionId, Connections<String> connections) {
         this.connectionId = connectionId;
+        System.out.println("new client connected and this protocol now has his CH_Id");
     }
 
     @Override
@@ -39,25 +36,25 @@ public class messagingProtocolImp implements BidiMessagingProtocol<String> {
         System.out.println("opcode="+opcode+", ");
         String msgBody = message.substring(2);
         if (opcode == 1){ //register
-            this.client = dataBase.registerOP(msgBody);
+            this.user = dataBase.registerOP(msgBody, connectionId); //also initiating the client field
+            //the database responsible register the user and return ack/error response to the client
         }
         if (opcode == 2) //login
-            dataBase.loginOP(msgBody);
+            dataBase.loginOP(msgBody, connectionId);
         if (opcode == 3) //logout
-            dataBase.logout(this.client.getUsername());
+            dataBase.logout(this.user.getUsername(),connectionId);
         if (opcode == 4) //follow/unfollow
-            dataBase.follow_unFollowOP(msgBody);
+            dataBase.follow_unFollowOP(this.user.getUsername(),msgBody,connectionId);
         if (opcode == 5) //post
-            dataBase.post(this.client.getUsername(), msgBody);
+            dataBase.postOP(this.user.getUsername(), msgBody,connectionId);
         if (opcode == 6) //PM(personal message)
-            dataBase.personalMessageOP(this.client.getUsername(), msgBody);
+            dataBase.personalMessageOP(this.user.getUsername(), msgBody,connectionId);
         if (opcode == 7) //LOGSTAT
-            dataBase.produceLOGSTAT(this.client.getUsername());
+            dataBase.produceLOGSTAT(this.user.getUsername(),connectionId);
         if (opcode == 8) //STAT
-            dataBase.produceSTATOP(this.client.getUsername(), msgBody);
+            dataBase.produceSTATOP(this.user.getUsername(), msgBody,connectionId);
 
     }
-
 
 
     @Override

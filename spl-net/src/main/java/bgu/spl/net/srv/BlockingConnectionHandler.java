@@ -21,13 +21,18 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
     private volatile boolean connected = true;
 
     //new:
-    private int id = 0;
-    private Connections connections = new ConnectionsImpl();//*_*
+    private int CH_id = 0;
+    private DataBase dataBase;
+    private Connections connections;
 
     public BlockingConnectionHandler(Socket sock, MessageEncoderDecoder<T> reader, BidiMessagingProtocol<T> protocol) {
         this.sock = sock;
         this.encdec = reader;
         this.protocol = protocol;
+        dataBase = DataBase.get_instance();
+        connections = dataBase.getConnections();
+        CH_id = dataBase.addConnection(this); //register this Ch in db and connections and get and set his Ch_id
+        protocol.start(this.CH_id, connections);   //d"n.. set the Cg_id in protocol
     }
 
     @Override
@@ -37,7 +42,6 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
 
             in = new BufferedInputStream(sock.getInputStream());
             out = new BufferedOutputStream(sock.getOutputStream());
-            protocol.start(this.id, connections);   //register this CH so that connections could send him messages
 
             while (!protocol.shouldTerminate() && connected && (read = in.read()) >= 0) {
                 T nextMessage = encdec.decodeNextByte((byte) read);
@@ -63,7 +67,11 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
     }
 
     @Override
-    public void send(T msg) {
-
+    public void send(T msg) {//**********************************not sure if that correct*******************************
+        try{
+            out.write(encdec.encode(msg));
+            out.flush();
+        }
+        catch(Exception e){};
     }
 }

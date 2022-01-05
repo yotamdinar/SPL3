@@ -3,6 +3,8 @@ package bgu.spl.net.srv;
 import bgu.spl.net.api.MessageEncoderDecoder;
 import bgu.spl.net.api.MessagingProtocol;
 import bgu.spl.net.api.bidi.BidiMessagingProtocol;
+import bgu.spl.net.api.bidi.Connections;
+import bgu.spl.net.api.bidi.ConnectionsImpl;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -25,6 +27,9 @@ public class Reactor<T> implements Server<T> {
     private Thread selectorThread;
     private final ConcurrentLinkedQueue<Runnable> selectorTasks = new ConcurrentLinkedQueue<>();
 
+    private DataBase dataBase;
+    private Connections connections;
+
     public Reactor(
             int numThreads,
             int port,
@@ -39,7 +44,10 @@ public class Reactor<T> implements Server<T> {
 
     @Override
     public void serve() {
-	selectorThread = Thread.currentThread();
+        dataBase = DataBase.get_instance();
+        connections = dataBase.getConnections();
+
+	    selectorThread = Thread.currentThread();
         try (Selector selector = Selector.open();
                 ServerSocketChannel serverSock = ServerSocketChannel.open()) {
 

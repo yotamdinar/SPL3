@@ -16,7 +16,7 @@ public class Program {
 
         //Socket socket = new Socket();
         //ConnectionHandler<String> handler  = new BlockingConnectionHandler<>(socket,new MessageEncoderDecoderImp(), new messagingProtocolImp(xavi, connections));
-        BidiMessagingProtocol<String> protocol = new messagingProtocolImp(dataBase.getConnectionsImpl());
+        BidiMessagingProtocol<String> protocol = new messagingProtocolImp();
         String msg = "01Username"+'\0'+"Password"+'\0'+"Birthday"+'\0';
         protocol.process(msg);
     }
