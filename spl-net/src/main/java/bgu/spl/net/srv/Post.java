@@ -27,7 +27,7 @@ public class Post {
         return taggedUsernames;
     }
 
-    public void parseTaggedUsernames(){
+    public List<String> parseTaggedUsernames(){
         List<String> taggedUsernames = new LinkedList<>();
         String content = getPostContent();
         while (content.indexOf('@') >= 0){  //abc@yotam @shlomi ab@xavi
@@ -44,5 +44,6 @@ public class Post {
                 break;
             content = content.substring(firstSpaceafterTag+1);
         }
+        return taggedUsernames;
     }
 }

@@ -12,7 +12,7 @@ public class ConnectionsImpl<T> implements Connections<T>{
 
     @Override
     public boolean send(int connectionId, T msg) {
-        CHId_CH_map.get(0).send(msg);
+        CHId_CH_map.get(connectionId).send(msg);
         return false;
     }
 

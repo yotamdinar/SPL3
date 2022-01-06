@@ -69,7 +69,7 @@ public  class DataBase {
     }
 
     private void sendResponse(String responseMsg, int connectionId){
-        connections.send(connectionId, responseMsg);
+        connections.send(connectionId, responseMsg+';');
     }
 
     public User registerOP(String m, int clientChId){ /*<Username>'\0'<Password>'\0'<Birthday>'\0'*/
@@ -137,16 +137,13 @@ public  class DataBase {
             success = follow(username, elements[1]);
         else success = unfollow(username, elements[1]);
        if (success)
-           sendResponse("1004", clientChId);
-       else sendResponse("1104", clientChId);
-       //need to correct the resonses here **********************************************************************************************************
-       /*The ack for this command will contain the user name of the followed/unfollowed user.
-The ACK message will have the following form:
-ACK-Opcode FOLLOW-Opcode <username>*/
+           sendResponse("1004 "+elements[1], clientChId);
+       else sendResponse("1104 "+elements[1], clientChId);
     }
 
     private boolean follow(String username, String toFollow){
-        if ( RegisteredAndLoggedIn(username) && !username_user_map.get(username).getFollowingList().contains(toFollow)){
+        if ( RegisteredAndLoggedIn(username) && !username_user_map.get(username).getFollowingList().contains(toFollow) &&
+            !username_user_map.get(toFollow).blockedUsers.contains(username)) {
             username_user_map.get(username).getFollowingList().add(toFollow);
             return true;
         }
@@ -177,23 +174,36 @@ ACK-Opcode FOLLOW-Opcode <username>*/
      */
     private boolean post(String publisher, String content, int clientChId){
         if (RegisteredAndLoggedIn(publisher)){
-            ////********************************************************************************************************************************
+            String filteredContent = filterMessage(content);
+            Post post = new Post(publisher, filteredContent);
+
+            List<String> reciepients = post.parseTaggedUsernames();
+            for (String follower : username_user_map.get(publisher).followersList)
+                reciepients.add(follower);
+            for (String reciepient : reciepients){
+                if (!username_user_map.get(reciepient).blockedUsers.contains(publisher))
+                username_user_map.get(reciepient).receivePost(post);
+
+                int reciepient_ChId = username_CHID_map.get(reciepient);
+                sendNotification(1, publisher, post.getPostContent(), reciepient_ChId);//sending notification about the post to receiving client
+            }
+            username_user_map.get(publisher).publishPost(post);
             return true;
         }
         return  false;
     }
 
     public void personalMessageOP(String senderUsername, String msg, int clientChId){
-        String[] elements = getElements(msg, '\0', 3);
-        int success = personalMessage(senderUsername, elements[0], elements[1], elements[2]);
+        String[] elements = getElements(msg, '\0', 2);
+        int success = personalMessage(senderUsername, elements[0], elements[1]);
         if (success >=0)
             sendResponse("1006", clientChId);
         else if (success == -1 | success == -3)
             sendResponse("1106", clientChId);
-        else sendResponse("1106@"+elements[0], clientChId); //need to check if response correct ************************************************************
+        else sendResponse("1106@"+elements[0]+" @<username> isn’t applicable for private messages", clientChId); //need to check if response correct ************************************************************
     }
 
-    private int personalMessage(String senderUsername, String reciepient, String content, String dateAndTime){
+    private int personalMessage(String senderUsername, String reciepient, String content){
         if (!RegisteredAndLoggedIn(senderUsername))
             return -1;
         if (!isRegistered(reciepient)) /*If the reciepient user isn’t registered an ERROR message will be returned to the client.
@@ -201,9 +211,59 @@ ACK-Opcode FOLLOW-Opcode <username>*/
             return -2;
         if (!username_user_map.get(senderUsername).getFollowingList().contains(reciepient))
             return -3;
-        //send the pm(not implemented) ***************************************************************************************************
+        if (username_user_map.get(reciepient).blockedUsers.contains(senderUsername))
+            return -4;
+        String filteredContent = filterMessage(content);
+        int reciepient_ChId = username_CHID_map.get(reciepient);
+        sendNotification(0, senderUsername, filteredContent, reciepient_ChId);//sending notification about the pm to receiving client
         return 1;
     }
+
+    //07
+    public void produceLOGSTAT(String requestingUsername, int clientChId){
+        if (RegisteredAndLoggedIn(requestingUsername)){
+            for (User user: username_user_map.values()){
+                if (RegisteredAndLoggedIn(user.getUsername()) && !username_user_map.get(user.getUsername()).blockedUsers.contains(requestingUsername)){
+                    sendResponse("1007"+user.produceStatRecord(), clientChId); //sending the ack
+                }
+            }
+        }
+        else sendResponse("1107", clientChId);
+    }
+
+    //8
+    public void produceSTAT(String requestingUsername, String usersList, int clientChId){
+        if (RegisteredAndLoggedIn(requestingUsername)){
+            int numOfUsersInList = 1;
+            for (int i = 0; i < usersList.length() - 1; i++)
+                if (usersList.charAt(i) == '|')
+                    numOfUsersInList++;
+            String[] usernames = getElements(usersList, '|', numOfUsersInList);
+            List<String> usernamesList = new LinkedList<>();
+            for (int i = 0; i < usernames.length; i++)
+                usernamesList.add(usernames[i]);
+            for (String username : usernamesList) {
+                User u = username_user_map.get(username);
+                if (u != null && isLoggedIn(username) && !username_user_map.get(username).blockedUsers.contains(requestingUsername)) {
+                    sendResponse("1008" + u.produceStatRecord(), clientChId);
+                } else sendResponse("1108", clientChId);
+            }
+        }
+        else sendResponse("1108", clientChId);
+    }
+
+    //12
+    public void Block(String requestingUsername, String msg, int clientChId){
+        String[] elements = getElements(msg, '\0', 1);
+        String toBlock = elements[0];
+        if (RegisteredAndLoggedIn(requestingUsername) && isRegistered(toBlock)){
+            username_user_map.get(requestingUsername).block(toBlock);
+            username_user_map.get(toBlock).block(requestingUsername);
+            sendResponse("1012", clientChId);
+        }
+        else sendResponse("1112", clientChId);
+    }
+
 
     /**
      * @param username , must be a registered user
@@ -220,24 +280,12 @@ ACK-Opcode FOLLOW-Opcode <username>*/
         return this.username_pass_map.containsKey(username);
     }
 
-    /**
-     *
-     * @return for each logged in user the following List: <Age><NumPosts> <NumFollowers> <NumFollowing>
-     */
-    public List<List<Integer>> produceLOGSTAT(String requestingUsername, int clientChId){
-        return null;
-    }
 
-    public void produceSTATOP(String requestingUsername, String usersList, int clientChId){
-        int numOfUsersInList = 1 ;
-        for(int i = 0 ; i < usersList.length()-1;i++)
-            if (usersList.charAt(i) == '|')
-                numOfUsersInList ++;
-        String[] usernames = getElements(usersList, '|', numOfUsersInList);
-        List<String> usernamesList = new LinkedList<>();
-        for (int i = 0; i < usernames.length;i++)
-            usernamesList.add(usernames[i]);
-        produceSTAT(requestingUsername, usernamesList);
+
+    //09
+    public void sendNotification(int NotificationType, String PostingUser, String content, int clientChId){
+        String msg = "09"+NotificationType+PostingUser+'\0'+content+'\0';
+        sendResponse(msg, clientChId);
     }
 
     /**
@@ -248,11 +296,29 @@ ACK-Opcode FOLLOW-Opcode <username>*/
         return null;
     }
 
-    public void Block(String username){
-    }
+
 
     private boolean RegisteredAndLoggedIn(String username){
         return isRegistered(username) && isLoggedIn(username);
+    }
+
+
+        /*All PM messages should be saved to a data structure in the application, along with post messages.
+Before showing and saving the message, the server should filter the message from words provided in
+the server, and every filtered word should be replaced with ‘<filtered>’.
+The data structure which includes the words need to be filtered, is hard coded in the server.
+For example: if the server has a list of words [‘war’, ‘Trump’], and the message
+Which some client had send was: ‘Trump is planning to declare a war on the republic of Lala-land’
+Then the message that will be saved in the server is: ‘<filtered> is planning to declare a <filtered> on
+the republic of Lala-land’*/
+    /**
+     *
+     * @param message un filtered message
+     * @return the message after it been filtered from illegal words
+     */
+    public String filterMessage(String message){
+        return"-1";
+        //not implemented yet
     }
 
 

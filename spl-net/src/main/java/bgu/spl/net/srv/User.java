@@ -7,11 +7,12 @@ public class User {
 
     private String username;
     private String password;
-    private String birthday;
+    private String birthday;    //DD-MM-YYYY
     private boolean loggedIn;
     List<String> followingList; //list of the users this user follows
     List<String> followersList; //list of the users that follows this user
     List<Post> postedPostsList; //list of all posted that published by this user
+    List<Post> postsReceived; //list of all posted that this user recived
     List<String> blockedUsers;
 
     List<String> illegalWords;
@@ -32,15 +33,9 @@ public class User {
     /*public String getPassword() {
         return password;
     }*/
-    /*public void setPassword(String password) {
-        this.password = password;
-    }*/
+
     public String getBirthday() {
         return birthday;
-    }
-
-    private void setBirthday(String birthday) {
-        this.birthday = birthday;
     }
 
     public boolean isLoggedIn() {
@@ -55,40 +50,24 @@ public class User {
         return followingList;
     }
 
-    private void setFollowingList(List<String> followingList) {
-        this.followingList = followingList;
-    }
-
     public List<String> getFollowersList() {
         return followersList;
-    }
-
-    private void setFollowersList(List<String> followersList) {
-        this.followersList = followersList;
     }
 
     public List<Post> getPostedPostsList() {
         return postedPostsList;
     }
 
-    private void setPostedPostsList(List<Post> postedPostsList) {
-        this.postedPostsList = postedPostsList;
-    }
-
     public List<String> getBlockedUsers() {
         return blockedUsers;
-    }
-
-    private void setBlockedUsers(List<String> blockedUsers) {
-        this.blockedUsers = blockedUsers;
     }
 
     public List<String> getIllegalWords() {
         return illegalWords;
     }
 
-    public void setIllegalWords(List<String> illegalWords) {
-        this.illegalWords = illegalWords;
+    public List<Post> getPostsReceived() {
+        return postsReceived;
     }
 
     public void login(){
@@ -100,24 +79,33 @@ public class User {
 
     }
 
-    public int getAge(){
-        return -1;
+    /**
+     * add the post to list of post accepted by this user
+     */
+    public void receivePost(Post post){
+        this.postsReceived.add(post);
     }
 
-    /*All PM messages should be saved to a data structure in the application, along with post messages.
-Before showing and saving the message, the server should filter the message from words provided in
-the server, and every filtered word should be replaced with ‘<filtered>’.
-The data structure which includes the words need to be filtered, is hard coded in the server.
-For example: if the server has a list of words [‘war’, ‘Trump’], and the message
-Which some client had send was: ‘Trump is planning to declare a war on the republic of Lala-land’
-Then the message that will be saved in the server is: ‘<filtered> is planning to declare a <filtered> on
-the republic of Lala-land’*/
     /**
-     *
-     * @param message un filtered message
-     * @return the message after it been filtered from illegal words
+     * adds a post published by this user to the published post list
      */
-    public String filterMessage(String message){
-        return"-1";
+    public void publishPost(Post post){
+        this.postedPostsList.add(post);
+    }
+
+    public int getAge(){//DD-MM-YYYY
+        return 2022 - Integer.parseInt(birthday.substring(6));
+    }
+
+    public String produceStatRecord(){
+        return ""+getAge()+" "+postedPostsList.size()+" "+followersList.size()+" "+followingList.size();
+    }
+
+    public void block(String toBlockUsername) {
+        if (followingList.contains(toBlockUsername))
+            followingList.remove(toBlockUsername);
+        if (followersList.contains(toBlockUsername))
+            followersList.remove(toBlockUsername);
+        blockedUsers.add(toBlockUsername);
     }
 }
