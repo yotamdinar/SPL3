@@ -26,7 +26,6 @@ public class messagingProtocolImp implements BidiMessagingProtocol<String> {
     @Override
     public void start(int connectionId, Connections<String> connections) {
         this.connectionId = connectionId;
-        System.out.println("new client connected and this protocol now has his CH_Id");
     }
 
     @Override

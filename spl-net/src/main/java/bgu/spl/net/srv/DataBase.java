@@ -37,9 +37,37 @@ public  class DataBase {
         return database;
     }
 
+    //getters
+
+    public static DataBase getDatabase() {
+        return database;
+    }
+
+    public ConcurrentHashMap<String, Integer> getUsername_CHID_map() {
+        return username_CHID_map;
+    }
+
+    public int getCH_Next_ID() {
+        return CH_Next_ID;
+    }
+
+    public ConcurrentHashMap<String, String> getUsername_pass_map() {
+        return username_pass_map;
+    }
+
+    public ConcurrentHashMap<String, User> getUsername_user_map() {
+        return username_user_map;
+    }
+
+    public List<String> getIllegalWords() {
+        return illegalWords;
+    }
+
     public Connections getConnections(){
         return this.connections;
     }
+
+    //methods
 
     /**
      *
@@ -53,29 +81,9 @@ public  class DataBase {
         return newId;
     }
 
-    /**
-     * @param msg <Username>'/0'<Password>'/0'</Birthday>'/0'
-     * @param delimiter
-     * @param numberOfElements
-     * @return
-     */
-    private String[] getElements(String msg, char delimiter, int numberOfElements) {
-        String m =  msg;
-        String[] output = new String[numberOfElements];
-        for (int i = 0; i < numberOfElements && m.indexOf(delimiter) != -1; i++) {
-            output[i] = m.substring(0, m.indexOf(delimiter));   //the next element
-            m = m.substring(m.indexOf(delimiter)+1);   //after catting rthe element
-        }
-        return output;
-    }
-
-    private void sendResponse(String responseMsg, int connectionId){
-        connections.send(connectionId, responseMsg+';');
-    }
-
     public User registerOP(String m, int clientChId){ /*<Username>'\0'<Password>'\0'<Birthday>'\0'*/
-        String[] elements = getElements(m, '\0', 4);
-        User u = register(elements[0], elements[1],elements[2]);
+        String[] elements = getElements(m, '\0', 3);
+        User u = register(elements[0], elements[1],elements[2], clientChId);
         //response:
         String response;
         if (u != null)
@@ -89,18 +97,20 @@ public  class DataBase {
      * registers new user to the server
      * @return null if user already registered, else returns the new User instance
      */
-    private User register(String username, String pass, String birthday /*or replace string with birthFormat?*/){
+    private User register(String username, String pass, String birthday, int clientChId){
         if (this.username_user_map.containsKey(username))
             return null; //allready registered;
         User u = new User(username, pass, birthday);
         username_user_map.put(username, u);
         username_pass_map.put(username, pass);
+        username_CHID_map.put(username, clientChId);
         return u;
     }
 
     public void loginOP(String m,int clientChId){/*<Username>'\0'<Password>'\0'*/
-        String[] elements = getElements(m, '\0', 2);
-        int success = login(elements[0], elements[1], 1);
+        String[] elements = getElements(m, '\0', 3);
+        System.out.println(elements[2]);
+        int success = login(elements[0], elements[1], Integer.parseInt(elements[2]));
         //response:
         if (success >= 0)
             sendResponse("1002", clientChId);
@@ -259,7 +269,6 @@ public  class DataBase {
         sendResponse(msg, clientChId);
     }
 
-
     //12
     public void Block(String requestingUsername, String msg, int clientChId){
         String[] elements = getElements(msg, '\0', 1);
@@ -329,5 +338,35 @@ the republic of Lala-land’*/
         return filtered;
     }
 
+
+    private void sendResponse(String responseMsg, int connectionId){
+        connections.send(connectionId, responseMsg+';');
+    }
+
+    /**
+     * @param msg <Username>'/0'<Password>'/0'</Birthday>'/0'
+     * @param delimiter
+     * @param numberOfElements
+     * @return
+     */
+    private String[] getElements(String msg, char delimiter, int numberOfElements) {
+        String m =  msg;
+        String[] output = new String[numberOfElements];
+        for (int i = 0; i < numberOfElements && m.indexOf(delimiter) != -1; i++) {
+            output[i] = m.substring(0, m.indexOf(delimiter));   //the next element
+            m = m.substring(m.indexOf(delimiter)+1);   //after catting rthe element
+        }
+        return output;
+    }
+
+    public String toString(){
+        String out = "database hash: " + this.hashCode()+'\n';
+        out += '\t' + "username_CHID_map: " + username_CHID_map.values().size()+ "\n";
+        for (String username : username_CHID_map.keySet()){
+            out+= "\t\t" + username+" CHid"+ database.getUsername_CHID_map().get(username);
+            out+= username_user_map.get(username).toString();
+        }
+       return out;
+    }
 
 }

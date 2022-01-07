@@ -1,6 +1,7 @@
 package bgu.spl.net.srv;
 
 
+import java.util.LinkedList;
 import java.util.List;
 
 public class User {
@@ -23,6 +24,10 @@ public class User {
         this.password = password;
         this.birthday = birthday;
         loggedIn = false;
+        followingList = new LinkedList<>();followersList = new LinkedList<>();
+        postedPostsList  = new LinkedList<>();postsReceived = new LinkedList<>();
+        blockedUsers = new LinkedList<>();
+
     }
 
     public String getUsername() {
@@ -107,5 +112,12 @@ public class User {
         if (followersList.contains(toBlockUsername))
             followersList.remove(toBlockUsername);
         blockedUsers.add(toBlockUsername);
+    }
+
+    public String toString() {
+        return "" + username + " pass: " + password + " birth: " + birthday + " loggedin: " + loggedIn + " follwing: " + followingList.size() +
+                " followers: " + followersList.size() + " postedPostsList: " + postedPostsList.size() + " postsReceived: " + postedPostsList.size() +
+                " blockedUsers: " + blockedUsers.size();
+
     }
 }

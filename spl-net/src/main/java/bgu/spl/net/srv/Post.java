@@ -37,7 +37,6 @@ public class Post {
                 taggedUsernames.add(content.substring(0)); //xavi)
             else {
                 String username = content.substring(0, firstSpaceafterTag); //yotam
-                System.out.println(username);
                 taggedUsernames.add(username);
             }
             if (firstSpaceafterTag < 0 || firstSpaceafterTag + 1 == content.length())
