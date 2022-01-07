@@ -12,8 +12,10 @@ public class ConnectionsImpl<T> implements Connections<T>{
 
     @Override
     public boolean send(int connectionId, T msg) {
+        if (!CHId_CH_map.containsKey(connectionId))
+            return false;
         CHId_CH_map.get(connectionId).send(msg);
-        return false;
+        return  true;
     }
 
     @Override

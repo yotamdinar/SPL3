@@ -19,13 +19,14 @@ public  class DataBase {
     //application related stuff
     private ConcurrentHashMap<String, String> username_pass_map;
     private ConcurrentHashMap<String, User> username_user_map;
-    //
+    private List<String> illegalWords;
 
     private DataBase(){
         username_CHID_map = new ConcurrentHashMap<>();
         this.connections = new ConnectionsImpl();
         username_pass_map = new ConcurrentHashMap<>();
         username_user_map = new ConcurrentHashMap<>();
+        illegalWords = new LinkedList<>();
         CH_Next_ID = 1;
     }
 
@@ -185,7 +186,7 @@ public  class DataBase {
                 username_user_map.get(reciepient).receivePost(post);
 
                 int reciepient_ChId = username_CHID_map.get(reciepient);
-                sendNotification(1, publisher, post.getPostContent(), reciepient_ChId);//sending notification about the post to receiving client
+                sendNotification('1', publisher, post.getPostContent(), reciepient_ChId);//sending notification about the post to receiving client
             }
             username_user_map.get(publisher).publishPost(post);
             return true;
@@ -215,7 +216,7 @@ public  class DataBase {
             return -4;
         String filteredContent = filterMessage(content);
         int reciepient_ChId = username_CHID_map.get(reciepient);
-        sendNotification(0, senderUsername, filteredContent, reciepient_ChId);//sending notification about the pm to receiving client
+        sendNotification('0', senderUsername, filteredContent, reciepient_ChId);//sending notification about the pm to receiving client
         return 1;
     }
 
@@ -252,6 +253,13 @@ public  class DataBase {
         else sendResponse("1108", clientChId);
     }
 
+    //09
+    public void sendNotification(char NotificationType, String PostingUser, String content, int clientChId){
+        String msg = "09"+NotificationType+PostingUser+'\0'+content+'\0';
+        sendResponse(msg, clientChId);
+    }
+
+
     //12
     public void Block(String requestingUsername, String msg, int clientChId){
         String[] elements = getElements(msg, '\0', 1);
@@ -282,11 +290,6 @@ public  class DataBase {
 
 
 
-    //09
-    public void sendNotification(int NotificationType, String PostingUser, String content, int clientChId){
-        String msg = "09"+NotificationType+PostingUser+'\0'+content+'\0';
-        sendResponse(msg, clientChId);
-    }
 
     /**
      * @param usersList user to produce their status
@@ -317,8 +320,13 @@ the republic of Lala-land’*/
      * @return the message after it been filtered from illegal words
      */
     public String filterMessage(String message){
-        return"-1";
-        //not implemented yet
+        String filtered = message;
+        for (String badWord : illegalWords){
+            {
+                filtered.replace(badWord, "<filtered>");
+            }
+        }
+        return filtered;
     }
 
 
