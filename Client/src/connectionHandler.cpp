@@ -81,7 +81,7 @@ void ConnectionHandler::close() {
     try{
         socket_.close();
         shouldTerminate_ = true;
-        std::cout << "successfully dissconnected, client will now terminate" << std::endl;
+        std::cout << "successfully disconnected, client will now terminate" << std::endl;
     } catch (...) {
         std::cout << "closing failed: connection already closed" << std::endl;
     }
@@ -190,7 +190,7 @@ void ConnectionHandler::sendLoginMessage(std::string message){
     bytes[bytes_size-2] = '1';
     bytes[bytes_size-1] = ';';
 
-    //printCharArray(bytes,bytes_size);
+    printCharArray(bytes,bytes_size);
 
     sendBytes(bytes, bytes_size);
 
@@ -326,6 +326,7 @@ void ConnectionHandler::processNotificationMessage(std::string message){
 void ConnectionHandler::processAckMessage(std::string message){
     std::string output = "ACK " + message.substr(2);
     if(message.substr(2,2) == "03")
+        std::cout << "preparing to terminate" << std::endl;
         close();
     std::cout << output << std::endl;
 }
@@ -368,6 +369,7 @@ bool ConnectionHandler::getBytes(char bytes[], unsigned int bytesToRead) {
 			throw boost::system::system_error(error);
     } catch (std::exception& e) {
         std::cerr << "recv failed (Error: " << e.what() << ')' << std::endl;
+        exit(0);
         return false;
     }
     return true;
@@ -376,6 +378,7 @@ bool ConnectionHandler::getBytes(char bytes[], unsigned int bytesToRead) {
 bool ConnectionHandler::sendBytes(const char bytes[], int bytesToWrite) {
     int tmp = 0;
 	boost::system::error_code error;
+    std::cout << bytes[0] << std::endl;
     try {
         while (!error && bytesToWrite > tmp ) {
 			tmp += socket_.write_some(boost::asio::buffer(bytes + tmp, bytesToWrite - tmp), error);
