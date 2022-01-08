@@ -19,8 +19,11 @@ public class ConnectionsImpl<T> implements Connections<T>{
     public boolean send(int connectionId, T msg) {
         if (!CHId_CH_map.containsKey(connectionId))
             return false;
-        CHId_CH_map.get(connectionId).send(msg);
         System.out.println("(ConnectionImpl.send) "+msg);
+        CHId_CH_map.get(connectionId).send(msg);
+        System.out.println("(ConnectionImpl.send) : connection id" + connectionId);
+        System.out.println("(ConnectionImpl.send) ch is not nul: "+CHId_CH_map.get(connectionId) != null);
+
         return  true;
     }
 

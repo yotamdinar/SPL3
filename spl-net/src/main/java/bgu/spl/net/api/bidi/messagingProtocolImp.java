@@ -32,7 +32,7 @@ public class messagingProtocolImp implements BidiMessagingProtocol<String> {
     public void process(String message) { //02'\0'<Username>'\0'<Password>'\0'
         System.out.println("(protocol.process)processing: " + message);
         Integer opcode = Integer.parseInt(message.substring(0, 2));
-        System.out.println("opcode="+opcode+", ");
+        System.out.println("(protocol.process)opcode="+opcode+", ");
         String msgBody = "";
         if (message.length() > 2)
              msgBody = message.substring(2); //'\0'<Username>'\0'<Password>'\0'
@@ -54,7 +54,6 @@ public class messagingProtocolImp implements BidiMessagingProtocol<String> {
             dataBase.produceLOGSTAT(this.user.getUsername(),connectionId);
         if (opcode == 8) //STAT
             dataBase.produceSTAT(this.user.getUsername(), msgBody,connectionId);
-
     }
 
 
