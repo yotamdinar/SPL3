@@ -24,9 +24,13 @@ public class User {
         this.password = password;
         this.birthday = birthday;
         loggedIn = false;
-        followingList = new LinkedList<>();followersList = new LinkedList<>();
-        postedPostsList  = new LinkedList<>();postsReceived = new LinkedList<>();
+        followingList = new LinkedList<>();
+        followersList = new LinkedList<>();
+        postedPostsList  = new LinkedList<>();
+        postsReceived = new LinkedList<>();
         blockedUsers = new LinkedList<>();
+        illegalWords = new LinkedList<>();
+        illegalWords.add("macabi");
 
     }
 

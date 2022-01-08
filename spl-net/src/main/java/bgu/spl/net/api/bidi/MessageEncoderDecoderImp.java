@@ -10,18 +10,18 @@ public class MessageEncoderDecoderImp implements MessageEncoderDecoder<String> {
     private List<Byte> bytes = new LinkedList<Byte>();
 
     @Override
-    public byte[] encode(String message) { //message = "1001"
+    public byte[] encode(String message) { //message = "1001;"
         System.out.println("(encdec.encode)  before encoding string message = " + message);
-        byte[] bytes = new byte[message.length()+1];
+        byte[] bytes = new byte[message.length()];
         short OpCode = Short.parseShort(message.substring(0, 2));
         System.out.println("(encdec.encode) short opcode = " + OpCode);
-        bytes[0] = (byte)((OpCode >> 8) & 0xFF);
-        bytes[1] = (byte)(OpCode & 0xFF);
-        for(int i = 2; i < message.length(); i++){
+//        bytes[0] = (byte)((OpCode >> 8) & 0xFF);
+//        bytes[1] = (byte)(OpCode & 0xFF);
+        for(int i = 0; i < message.length(); i++){
             bytes[i] = (byte) message.charAt(i);
         }/////////////////////////////////////////////////////////need to add here the delimiters '0' or '\0'....
-        bytes[bytes.length] = (byte) ';';
-        System.out.println("(encedc.encode) after encoding resonse: " +bytes.toString());
+        //bytes[bytes.length-1] = (byte) ';';
+        System.out.println("(encedc.encode) after encoding response: " +bytes.toString());
         return bytes;
     }
 
@@ -35,7 +35,7 @@ public class MessageEncoderDecoderImp implements MessageEncoderDecoder<String> {
     }
 
     private String decodeMessage(List<Byte> bytesMessage){ //01Neymar0
-        System.out.println("(encdec.encode)before decoding "+bytesMessage.get(0) + bytesMessage.get(1)+ bytesMessage.get(2)+" --->     " +bytesMessage.toString());
+        System.out.println("(encdec.encode)before decoding[0]" + bytesMessage.get(0));
 
         String stringMessage = "";
         byte[] opBytes = new byte[2];

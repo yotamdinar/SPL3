@@ -86,10 +86,14 @@ public  class DataBase {
         User u = register(elements[0], elements[1],elements[2], clientChId);
         //response:
         String response;
-        if (u != null)
+        if (u != null) {
+            System.out.println("(DataBase.registerOP)sending 1001");
             sendResponse("1001", clientChId);    //return ack <10><01> => <opcode><regopcode>
-        else
+        }
+        else {
+            System.out.println("(DataBase.registerOP)sending 1101");
             sendResponse("1101", clientChId);   //return error
+        }
         System.out.println("(Database.registerOP) printing db after regiteration" + database.toString());
         return u;
     }
@@ -108,14 +112,19 @@ public  class DataBase {
         return u;
     }
 
-    public void loginOP(String m,int clientChId){/*<Username>'\0'<Password>'\0'*/
+    public void loginOP(String m,int clientChId){/*<Username>'\0'<Password>'\0'CAPCHA\0*/
         String[] elements = getElements(m, '\0', 3);
         System.out.println(elements[2]);
         int success = login(elements[0], elements[1], Integer.parseInt(elements[2]));
         //response:
-        if (success >= 0)
+        if (success >= 0){
+            System.out.println("(DataBase.registerOP)sending 1002");
             sendResponse("1002", clientChId);
-        else sendResponse("1102", clientChId);
+        }
+        else {
+            System.out.println("(DataBase.registerOP)sending 1102");
+            sendResponse("1102", clientChId);
+        }
     }
 
     /**
@@ -137,13 +146,21 @@ public  class DataBase {
     }
 
     public void logout(String username, int clientChId){/*<>*/
-        if ( RegisteredAndLoggedIn(username))
+        if ( username != null && RegisteredAndLoggedIn(username)) {
+            System.out.println("(DataBase.registerOP)sending 1003");
+            this.username_user_map.get(username).logout();
             sendResponse("1003", clientChId);
-        else sendResponse("1103", clientChId);
+        }
+        else {
+            sendResponse("1103", clientChId);
+            System.out.println("(DataBase.registerOP)sending 1103");
+        }
     }
 
     public void follow_unFollowOP(String username,String msg, int clientChId){ /*<0/1 (Follow/Unfollow)> <UserNametoFollow>*/
         String[] elements = getElements(msg, '\0', 2);
+        System.out.println("first element: " + elements[0]);
+        System.out.println("first element: " + elements[1]);
         boolean success;
         if (elements[0] == "0")
             success = follow(username, elements[1]);
@@ -365,7 +382,7 @@ the republic of Lala-land’*/
         out += '\t' + "username_CHID_map: " + username_CHID_map.values().size()+ "\n";
         for (String username : username_CHID_map.keySet()){
             out+= "\t\t" + username+" CHid"+ database.getUsername_CHID_map().get(username);
-            out+= username_user_map.get(username).toString();
+            out+= username_user_map.get(username).toString()+"\n\t\t";
         }
        return out;
     }

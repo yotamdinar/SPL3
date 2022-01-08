@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/SPL3.iml" filepath="$PROJECT_DIR$/.idea/SPL3.iml" />
+      <module fileurl="file://$PROJECT_DIR$/spl-net/spl-net.iml" filepath="$PROJECT_DIR$/spl-net/spl-net.iml" />
     </modules>
   </component>
 </project>
