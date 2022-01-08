@@ -90,6 +90,7 @@ public  class DataBase {
             sendResponse("1001", clientChId);    //return ack <10><01> => <opcode><regopcode>
         else
             sendResponse("1101", clientChId);   //return error
+        System.out.println("(Database.registerOP) printing db after regiteration" + database.toString());
         return u;
     }
 
