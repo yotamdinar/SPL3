@@ -30,7 +30,7 @@ public class messagingProtocolImp implements BidiMessagingProtocol<String> {
 
     @Override
     public void process(String message) { //02'\0'<Username>'\0'<Password>'\0'
-        System.out.println("processing: " + message);
+        System.out.println("(protocol.process)processing: " + message);
         Integer opcode = Integer.parseInt(message.substring(0, 2));
         System.out.println("opcode="+opcode+", ");
         String msgBody = "";
