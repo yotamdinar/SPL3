@@ -59,7 +59,9 @@ void ConnectionHandler::encodeAndSend(std::string message){
 void ConnectionHandler::getAndProcess(){
     char nextByte[1];
     getBytes(nextByte,1);
+    std::cout << "(CH.getAndProcess) nextByte = " << nextByte[0] << std::endl;
     if(nextByte[0] == ';'){
+        std::cout << "(CH.getAndProcess) currMessage = " << currMessage_ << std::endl;
         process(currMessage_);
         currMessage_ = "";
     }
@@ -171,8 +173,8 @@ void ConnectionHandler::sendStatMessage(std::string message){
 }
 
 void ConnectionHandler::sendLoginMessage(std::string message){
-    //bytes_size = message.size -6("LOGIN ") +2(opcode) +3('0' +captcha + ';') = message.size-1
-    size_t bytes_size = message.size()-1;
+    //bytes_size = message.size -6("LOGIN ") +2(opcode) +3('0' +captcha + ';') + 1('0') = message.size
+    size_t bytes_size = message.size();
     char bytes[bytes_size];
     bytes[0] = '0';
     bytes[1] = '2';
@@ -186,11 +188,12 @@ void ConnectionHandler::sendLoginMessage(std::string message){
             i++;
         }
     }
-    bytes[bytes_size-3] = '\0';
-    bytes[bytes_size-2] = '1';
+    bytes[bytes_size-4] = '\0';
+    bytes[bytes_size-3] = '1';
+    bytes[bytes_size-2] = '\0';
     bytes[bytes_size-1] = ';';
 
-    printCharArray(bytes,bytes_size);
+//    printCharArray(bytes,bytes_size);
 
     sendBytes(bytes, bytes_size);
 
@@ -232,13 +235,14 @@ void ConnectionHandler::sendLogoutMessage(std::string message){
 
 void ConnectionHandler::sendFollowMessage(std::string message){
     //bytes_size = message.size - 8("FOLLOW " + ' ') +2(opcode) + 2("0;")= mesage.size-4
-    size_t bytes_size = message.size() - 4;
+    size_t bytes_size = message.size() - 3;
     char bytes[bytes_size];
     bytes[0] = '0';
     bytes[1] = '4';
     bytes[2] = message[7];
+    bytes[3] = '\0';
     for(size_t i = 9; i < message.size(); i++){
-        bytes[i-6] = message[i];
+        bytes[i-5] = message[i];
     }
 
     bytes[bytes_size-2] = '\0';
@@ -288,7 +292,7 @@ void ConnectionHandler::process(std::string message){
     } else if(message.substr(0,2) == "11"){
         processErrorMessage(message);
     } else{
-        std::cout << "cannot process message, opCode not recognized" << std::endl; 
+        std::cout << "cannot process message from server, opCode not recognized" << std::endl;
     }
 }
 
@@ -325,10 +329,10 @@ void ConnectionHandler::processNotificationMessage(std::string message){
 
 void ConnectionHandler::processAckMessage(std::string message){
     std::string output = "ACK " + message.substr(2);
-    if(message.substr(2,2) == "03")
-        std::cout << "preparing to terminate" << std::endl;
-        close();
     std::cout << output << std::endl;
+    if(message.substr(2,2) == "03") {
+        close();
+    }
 }
 
 void ConnectionHandler::processErrorMessage(std::string message){
@@ -368,7 +372,7 @@ bool ConnectionHandler::getBytes(char bytes[], unsigned int bytesToRead) {
 		if(error)
 			throw boost::system::system_error(error);
     } catch (std::exception& e) {
-        std::cerr << "recv failed (Error: " << e.what() << ')' << std::endl;
+            std::cerr << "recv failed (Error: " << e.what() << ')' << std::endl;
         exit(0);
         return false;
     }
@@ -378,7 +382,6 @@ bool ConnectionHandler::getBytes(char bytes[], unsigned int bytesToRead) {
 bool ConnectionHandler::sendBytes(const char bytes[], int bytesToWrite) {
     int tmp = 0;
 	boost::system::error_code error;
-    std::cout << bytes[0] << std::endl;
     try {
         while (!error && bytesToWrite > tmp ) {
 			tmp += socket_.write_some(boost::asio::buffer(bytes + tmp, bytesToWrite - tmp), error);
