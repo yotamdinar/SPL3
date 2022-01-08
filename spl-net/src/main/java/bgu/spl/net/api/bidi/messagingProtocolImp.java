@@ -16,7 +16,7 @@ public class messagingProtocolImp implements BidiMessagingProtocol<String> {
     private DataBase dataBase;
     //ConnectionHandler connectionHandler;
 
-    public messagingProtocolImp( /*ConnectionsImpl connections*/ /*, ConnectionHandler connectionHandler*/){
+    public messagingProtocolImp(){
 
         this.dataBase = DataBase.get_instance();
         this.connections = dataBase.getConnections();
@@ -42,8 +42,10 @@ public class messagingProtocolImp implements BidiMessagingProtocol<String> {
         }
         if (opcode == 2) //login
             dataBase.loginOP(msgBody, connectionId);
-        if (opcode == 3) //logout
-            dataBase.logout(this.user.getUsername(),connectionId);
+        if (opcode == 3 && user != null)  //logout
+            dataBase.logout(this.user.getUsername(), connectionId);
+        if (opcode == 3 && user == null)
+            dataBase.logout(null, connectionId);
         if (opcode == 4) //follow/unfollow
             dataBase.follow_unFollowOP(this.user.getUsername(),msgBody,connectionId);
         if (opcode == 5) //post
