@@ -274,7 +274,6 @@ public  class DataBase {
     }
 
     public void produceSTATOP(String requestingUsername, String msg, int clientId){
-        System.out.println("second " + msg);
         String[] elements = getElements(msg, '\0', 1);
         produceSTAT(requestingUsername, elements[0], clientId);
     }
@@ -282,18 +281,14 @@ public  class DataBase {
     //8
     public void produceSTAT(String requestingUsername, String usersList, int clientChId){
         usersList = usersList+'|';
-        System.out.println("elements[0] " +usersList);
         if (RegisteredAndLoggedIn(requestingUsername)){
             int numOfUsersInList = 0;
             for (int i = 0; i < usersList.length() ; i++) {
                 if (usersList.charAt(i) == '|')
                     numOfUsersInList++;
             }
-            System.out.println(numOfUsersInList);
             String[] usernames = getElements(usersList, '|', numOfUsersInList);
-            System.out.println("users to stat about");
             for (String s : usernames){
-                System.out.println(s);
             }
             List<String> usernamesList = new LinkedList<>();
             for (int i = 0; i < usernames.length; i++)
