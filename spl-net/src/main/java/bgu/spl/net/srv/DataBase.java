@@ -21,29 +21,26 @@ public  class DataBase {
     private ConcurrentHashMap<String, User> username_user_map;
     private List<String> illegalWords;
 
-    private DataBase(/*List<String> illegal*/){
+    public DataBase(){
         username_CHID_map = new ConcurrentHashMap<>();
         this.connections = new ConnectionsImpl();
         username_pass_map = new ConcurrentHashMap<>();
         username_user_map = new ConcurrentHashMap<>();
         illegalWords = new LinkedList<>();
-        illegalWords.add("macabi");
-        //illegalWords = illegal;
         CH_Next_ID = 1;
     }
 
+    private static class DataBaseHolder{
+        private static DataBase instance = new DataBase();
+    }
+
     public static DataBase get_instance(){
-        if(database==null) {
-            database=new DataBase();
-        }
-        return database;
+        return DataBaseHolder.instance;
     }
 
     //getters
 
-    public static DataBase getDatabase() {
-        return database;
-    }
+
 
     public ConcurrentHashMap<String, Integer> getUsername_CHID_map() {
         return username_CHID_map;
@@ -165,8 +162,6 @@ public  class DataBase {
 
     public void follow_unFollowOP(String username,String msg, int clientChId){ /*<0/1 (Follow/Unfollow)> <UserNametoFollow>*/
         String[] elements = getElements(msg, '\0', 2);
-        System.out.println("first element: " + elements[0]);
-        System.out.println("second element: " + elements[1]);
         boolean success;
         if (elements[0].equals("0"))
             success = follow(username, elements[1]);
@@ -212,19 +207,16 @@ public  class DataBase {
     private boolean post(String publisher, String content, int clientChId){
         if (RegisteredAndLoggedIn(publisher)){
             String filteredContent = filterMessage(content);
-            System.out.println(filteredContent);
             Post post = new Post(publisher, filteredContent);
 
             List<String> reciepients = post.parseTaggedUsernames();
             for (String follower : username_user_map.get(publisher).followersList) {
-                System.out.println("adding reciver to recive the post: "+follower);
                 if (!reciepients.contains(follower))
                     reciepients.add(follower);
             }
             for (String reciepient : reciepients) {
                 if ( username_user_map.get(reciepient) != null && !username_user_map.get(reciepient).blockedUsers.contains(publisher)) {
                     if (isLoggedIn(reciepient)) {
-                        System.out.println("sennnnd post " + post.getPostContent());
                         username_user_map.get(reciepient).receivePost(post);
 
                         int reciepient_ChId = username_CHID_map.get(reciepient);
@@ -281,14 +273,28 @@ public  class DataBase {
         else sendResponse("1107", clientChId);
     }
 
+    public void produceSTATOP(String requestingUsername, String msg, int clientId){
+        System.out.println("second " + msg);
+        String[] elements = getElements(msg, '\0', 1);
+        produceSTAT(requestingUsername, elements[0], clientId);
+    }
+
     //8
     public void produceSTAT(String requestingUsername, String usersList, int clientChId){
+        usersList = usersList+'|';
+        System.out.println("elements[0] " +usersList);
         if (RegisteredAndLoggedIn(requestingUsername)){
-            int numOfUsersInList = 1;
-            for (int i = 0; i < usersList.length() - 1; i++)
+            int numOfUsersInList = 0;
+            for (int i = 0; i < usersList.length() ; i++) {
                 if (usersList.charAt(i) == '|')
                     numOfUsersInList++;
+            }
+            System.out.println(numOfUsersInList);
             String[] usernames = getElements(usersList, '|', numOfUsersInList);
+            System.out.println("users to stat about");
+            for (String s : usernames){
+                System.out.println(s);
+            }
             List<String> usernamesList = new LinkedList<>();
             for (int i = 0; i < usernames.length; i++)
                 usernamesList.add(usernames[i]);
@@ -305,14 +311,12 @@ public  class DataBase {
     //09
     public void sendNotification(char NotificationType, String PostingUser, String content, int clientChId){
         String msg = "09"+NotificationType+PostingUser+'\0'+content+'\0';
-        System.out.println("sending notification " + msg);
         sendResponse(msg, clientChId);
     }
 
     //12
     public void block(String requestingUsername, String msg, int clientChId){
         String[] elements = getElements(msg, '\0', 1);
-        System.out.println("first element(to_block)=  " + elements[0]);
         String toBlock = elements[0];
         if (!requestingUsername.equals(toBlock) && RegisteredAndLoggedIn(requestingUsername) && isRegistered(toBlock)){
             username_user_map.get(requestingUsername).block(toBlock);
@@ -367,17 +371,10 @@ the republic of Lala-land’*/
      * @return the message after it been filtered from illegal words
      */
     public String filterMessage(String message){
-        System.out.println("filtering...");
-        for (String w : illegalWords)
-            System.out.println(w);
         String filtered = message;
-        System.out.println("after spliting: ");
-        for (String s : filtered.toLowerCase().split(" "))
-            System.out.println(s);
         for (String wordInContent : filtered.toLowerCase().split(" ")){
             {
                 if (illegalWords.contains(wordInContent)) {
-                    System.out.println(wordInContent);
                     filtered = filtered.replace(wordInContent, "<filtered>");
                 }
             }
@@ -404,6 +401,10 @@ the republic of Lala-land’*/
             m = m.substring(m.indexOf(delimiter)+1);   //after catting rthe element
         }
         return output;
+    }
+
+    public void addIllegalWord(String illegalWord){
+        illegalWords.add(illegalWord);
     }
 
     public String toString(){

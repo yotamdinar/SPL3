@@ -50,12 +50,10 @@ public class User {
     }
 
     public void addDelayPost(Post post){
-        System.out.println("post added to pendingpost list: " + post.getPostContent());
         pendingPosts.add(post);
     }
 
     public void addDelaymsg(PersonalMessage msg){
-        System.out.println("msg added to pending msgs: " + msg);
         pendingMsgs.add(msg);
     }
 
@@ -74,12 +72,10 @@ public class User {
     }
 
     public void addFollowing(String following){
-        System.out.println("following added "+ following);
         followingList.add(following);
     }
 
     public void addFollower(String follower){
-        System.out.println("added follower "+follower);
         followersList.add(follower);
     }
 
@@ -141,7 +137,6 @@ public class User {
      * add the post to list of post accepted by this user
      */
     public void receivePost(Post post){
-        System.out.println("post recived to "+this.username +" posts recived list");
         this.postsReceived.add(post);
     }
 
@@ -157,7 +152,7 @@ public class User {
     }
 
     public String produceStatRecord(){
-        return ""+getAge()+" "+postedPostsList.size()+" "+followersList.size()+" "+followingList.size();
+        return " record status: user name:"+this.getUsername()+", Age: "+getAge()+", Number of posts: "+postedPostsList.size()+", Number of followers: "+followersList.size()+", Number of following: "+followingList.size();
     }
 
     public void block(String toBlockUsername) {
@@ -172,6 +167,5 @@ public class User {
         return "" + username + " pass: " + password + " birth: " + birthday + " loggedin: " + loggedIn + " follwing: " + followingList.size() +
                 " followers: " + followersList.size() + " postedPostsList: " + postedPostsList.size() + " postsReceived: " + postedPostsList.size() +
                 " blockedUsers: " + blockedUsers.size();
-
     }
 }

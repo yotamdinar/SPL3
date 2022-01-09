@@ -24,6 +24,7 @@ bgu/spl/net/srv/User.class
 bgu/spl/net/api/bidi/BidiMessagingProtocol.class
 bgu/spl/net/srv/Post.class
 bgu/spl/net/srv/ActorThreadPool.class
+bgu/spl/net/srv/DataBase$DataBaseHolder.class
 bgu/spl/net/impl/rci/ObjectEncoderDecoder.class
 bgu/spl/net/impl/BGSServer/TPCMain.class
 bgu/spl/net/api/bidi/messagingProtocolImp.class
