@@ -121,7 +121,7 @@ void ConnectionHandler::sendPmMessage(std::string message){
     // std::cout << std::endl;
 
     
-    sendBytes(bytes, message.size());
+    sendBytes(bytes, message.size()+1);
 
 
 
@@ -298,6 +298,7 @@ void ConnectionHandler::process(std::string message){
 
 void ConnectionHandler::processNotificationMessage(std::string message){
     //figure out username size and content size
+    std::cout << "processNotificationMessage" << std::endl;
     int userSize = 0;
     size_t i = 3;
     while(i < message.size()){
@@ -314,7 +315,7 @@ void ConnectionHandler::processNotificationMessage(std::string message){
 
     //build message
     std::string type;
-    if(message[3] == '0')
+    if(message[2] == '0')
         type = "PM";
     else
         type = "Public";
