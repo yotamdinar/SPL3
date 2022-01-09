@@ -59,9 +59,7 @@ void ConnectionHandler::encodeAndSend(std::string message){
 void ConnectionHandler::getAndProcess(){
     char nextByte[1];
     getBytes(nextByte,1);
-    std::cout << "(CH.getAndProcess) nextByte = " << nextByte[0] << std::endl;
     if(nextByte[0] == ';'){
-        std::cout << "(CH.getAndProcess) currMessage = " << currMessage_ << std::endl;
         process(currMessage_);
         currMessage_ = "";
     }
@@ -154,18 +152,18 @@ void ConnectionHandler::sendPostMessage(std::string message){
 
 void ConnectionHandler::sendStatMessage(std::string message){
     // bytes_size = message.size - 4("stat ") +2(opcode) +2("0;") = message.size
-    size_t bytes_size = message.size();
-    char bytes[message.size()];
+    size_t bytes_size = message.size()+1;
+    char bytes[bytes_size];
     bytes[0] = '0';
     bytes[1] = '8';
     for(size_t i = 5; i < message.size(); i++){
         bytes[i-3] = message[i];
     }
-
+    bytes[bytes_size-3] = '|';
     bytes[bytes_size-2] = '\0';
     bytes[bytes_size-1] = ';';
 
-    // printCharArray(bytes,bytes_size);
+//    printCharArray(bytes,bytes_size);
 
     sendBytes(bytes, bytes_size);
 
@@ -257,7 +255,7 @@ void ConnectionHandler::sendLogstatMessage(std::string message){
     size_t bytes_size = 3;
     char bytes[3] = {'0','7',';'};
 
-    printCharArray(bytes,bytes_size);
+//    printCharArray(bytes,bytes_size);
     sendBytes(bytes,bytes_size);
 
 }
