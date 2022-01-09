@@ -28,14 +28,20 @@ public class Post {
     }
 
     public List<String> parseTaggedUsernames(){
+        System.out.println("parsing @@@@@");
         List<String> taggedUsernames = new LinkedList<>();
         String content = getPostContent();
         while (content.indexOf('@') >= 0){  //abc@yotam @shlomi ab@xavi
+            System.out.println("content.1");
             content = content.substring(content.indexOf('@')+1);   //yotam @shlomi ab@xavi
+            System.out.println("content.2");
             int firstSpaceafterTag = content.indexOf(' '); //=5
-            if (firstSpaceafterTag < 0)
+            if (firstSpaceafterTag <= 0 && content.length()>0) {
+                System.out.println("added" + content.substring(0));
                 taggedUsernames.add(content.substring(0)); //xavi)
+            }
             else {
+                System.out.println(content.substring(0, firstSpaceafterTag));
                 String username = content.substring(0, firstSpaceafterTag); //yotam
                 taggedUsernames.add(username);
             }
@@ -43,6 +49,9 @@ public class Post {
                 break;
             content = content.substring(firstSpaceafterTag+1);
         }
+
+        for (String s : taggedUsernames)
+            System.out.println(s);
         return taggedUsernames;
     }
 }

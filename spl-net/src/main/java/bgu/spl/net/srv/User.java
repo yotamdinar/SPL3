@@ -14,10 +14,12 @@ public class User {
     List<String> followersList; //list of the users that follows this user
     List<Post> postedPostsList; //list of all posted that published by this user
     List<Post> postsReceived; //list of all posted that this user recived
+    List<PersonalMessage> pmMsgsRecived;
     List<String> blockedUsers;
-
     List<String> illegalWords;
 
+    List<Post> pendingPosts;
+    List<PersonalMessage> pendingMsgs;
 
     public User(String username, String password, String birthday){
         this.username = username;
@@ -29,9 +31,56 @@ public class User {
         postedPostsList  = new LinkedList<>();
         postsReceived = new LinkedList<>();
         blockedUsers = new LinkedList<>();
-        illegalWords = new LinkedList<>();
-        illegalWords.add("macabi");
+        pendingPosts = new LinkedList<>();
+        pendingMsgs = new LinkedList<>();
+        pmMsgsRecived = new LinkedList<>();
 
+    }
+
+    public void receivePm(PersonalMessage pm){
+        pmMsgsRecived.add(pm);
+    }
+
+    public List<Post> getPendingPosts() {
+        return pendingPosts;
+    }
+
+    public List<PersonalMessage> getPendingMsgs() {
+        return pendingMsgs;
+    }
+
+    public void addDelayPost(Post post){
+        System.out.println("post added to pendingpost list: " + post.getPostContent());
+        pendingPosts.add(post);
+    }
+
+    public void addDelaymsg(PersonalMessage msg){
+        System.out.println("msg added to pending msgs: " + msg);
+        pendingMsgs.add(msg);
+    }
+
+    public void cleanPendingPosts(){
+        for (Post post : pendingPosts){
+            postsReceived.add(post);
+        }
+        pendingPosts = new LinkedList<>();
+    }
+
+    public void cleanPendingMsgs(){
+        for (PersonalMessage pm : pendingMsgs){
+            pmMsgsRecived.add(pm);
+        }
+        pendingMsgs = new LinkedList<>();
+    }
+
+    public void addFollowing(String following){
+        System.out.println("following added "+ following);
+        followingList.add(following);
+    }
+
+    public void addFollower(String follower){
+        System.out.println("added follower "+follower);
+        followersList.add(follower);
     }
 
     public String getUsername() {
@@ -92,6 +141,7 @@ public class User {
      * add the post to list of post accepted by this user
      */
     public void receivePost(Post post){
+        System.out.println("post recived to "+this.username +" posts recived list");
         this.postsReceived.add(post);
     }
 
