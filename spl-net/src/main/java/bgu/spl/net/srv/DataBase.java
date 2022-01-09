@@ -21,12 +21,14 @@ public  class DataBase {
     private ConcurrentHashMap<String, User> username_user_map;
     private List<String> illegalWords;
 
-    private DataBase(){
+    private DataBase(/*List<String> illegal*/){
         username_CHID_map = new ConcurrentHashMap<>();
         this.connections = new ConnectionsImpl();
         username_pass_map = new ConcurrentHashMap<>();
         username_user_map = new ConcurrentHashMap<>();
         illegalWords = new LinkedList<>();
+        illegalWords.add("macabi");
+        //illegalWords = illegal;
         CH_Next_ID = 1;
     }
 
@@ -87,14 +89,11 @@ public  class DataBase {
         //response:
         String response;
         if (u != null) {
-            System.out.println("(DataBase.registerOP)sending 1001");
             sendResponse("1001", clientChId);    //return ack <10><01> => <opcode><regopcode>
         }
         else {
-            System.out.println("(DataBase.registerOP)sending 1101");
             sendResponse("1101", clientChId);   //return error
         }
-        System.out.println("(Database.registerOP) printing db after regiteration" + database.toString());
         return u;
     }
 
@@ -114,15 +113,23 @@ public  class DataBase {
 
     public void loginOP(String m,int clientChId){/*<Username>'\0'<Password>'\0'CAPCHA\0*/
         String[] elements = getElements(m, '\0', 3);
-        System.out.println(elements[2]);
         int success = login(elements[0], elements[1], Integer.parseInt(elements[2]));
         //response:
         if (success >= 0){
-            System.out.println("(DataBase.registerOP)sending 1002");
             sendResponse("1002", clientChId);
+
+            for (Post post : username_user_map.get(elements[0]).getPendingPosts()){
+                sendNotification('1', post.getPublisher(), post.getPostContent(), username_CHID_map.get(elements[0]));
+            }
+            username_user_map.get(elements[0]).cleanPendingPosts();    //cleaning
+            for (PersonalMessage pm : username_user_map.get(elements[0]).getPendingMsgs()){
+                sendNotification('0', pm.getPublisher(), pm.getMsgContent(), username_CHID_map.get(elements[0]));
+            }
+            username_user_map.get(elements[0]).cleanPendingMsgs();     //cleaning
+
+
         }
         else {
-            System.out.println("(DataBase.registerOP)sending 1102");
             sendResponse("1102", clientChId);
         }
     }
@@ -142,27 +149,26 @@ public  class DataBase {
         if (isLoggedIn(username)) // user already logged-in
             return -3;
         username_user_map.get(username).login();
+
         return 1;
     }
 
     public void logout(String username, int clientChId){/*<>*/
         if ( username != null && RegisteredAndLoggedIn(username)) {
-            System.out.println("(DataBase.registerOP)sending 1003");
             this.username_user_map.get(username).logout();
             sendResponse("1003", clientChId);
         }
         else {
             sendResponse("1103", clientChId);
-            System.out.println("(DataBase.registerOP)sending 1103");
         }
     }
 
     public void follow_unFollowOP(String username,String msg, int clientChId){ /*<0/1 (Follow/Unfollow)> <UserNametoFollow>*/
         String[] elements = getElements(msg, '\0', 2);
         System.out.println("first element: " + elements[0]);
-        System.out.println("first element: " + elements[1]);
+        System.out.println("second element: " + elements[1]);
         boolean success;
-        if (elements[0] == "0")
+        if (elements[0].equals("0"))
             success = follow(username, elements[1]);
         else success = unfollow(username, elements[1]);
        if (success)
@@ -171,9 +177,11 @@ public  class DataBase {
     }
 
     private boolean follow(String username, String toFollow){
-        if ( RegisteredAndLoggedIn(username) && !username_user_map.get(username).getFollowingList().contains(toFollow) &&
+
+        if ( !username.equals(toFollow) && RegisteredAndLoggedIn(username) && !username_user_map.get(username).getFollowingList().contains(toFollow) &&
             !username_user_map.get(toFollow).blockedUsers.contains(username)) {
-            username_user_map.get(username).getFollowingList().add(toFollow);
+            username_user_map.get(username).addFollowing(toFollow);
+            username_user_map.get(toFollow).addFollower(username);
             return true;
         }
         return false;
@@ -204,17 +212,26 @@ public  class DataBase {
     private boolean post(String publisher, String content, int clientChId){
         if (RegisteredAndLoggedIn(publisher)){
             String filteredContent = filterMessage(content);
+            System.out.println(filteredContent);
             Post post = new Post(publisher, filteredContent);
 
             List<String> reciepients = post.parseTaggedUsernames();
-            for (String follower : username_user_map.get(publisher).followersList)
-                reciepients.add(follower);
-            for (String reciepient : reciepients){
-                if (!username_user_map.get(reciepient).blockedUsers.contains(publisher))
-                username_user_map.get(reciepient).receivePost(post);
+            for (String follower : username_user_map.get(publisher).followersList) {
+                System.out.println("adding reciver to recive the post: "+follower);
+                if (!reciepients.contains(follower))
+                    reciepients.add(follower);
+            }
+            for (String reciepient : reciepients) {
+                if ( username_user_map.get(reciepient) != null && !username_user_map.get(reciepient).blockedUsers.contains(publisher)) {
+                    if (isLoggedIn(reciepient)) {
+                        System.out.println("sennnnd post " + post.getPostContent());
+                        username_user_map.get(reciepient).receivePost(post);
 
-                int reciepient_ChId = username_CHID_map.get(reciepient);
-                sendNotification('1', publisher, post.getPostContent(), reciepient_ChId);//sending notification about the post to receiving client
+                        int reciepient_ChId = username_CHID_map.get(reciepient);
+                        sendNotification('1', publisher, post.getPostContent(), reciepient_ChId);//sending notification about the post to receiving client
+                    }
+                    else username_user_map.get(reciepient).addDelayPost(post);
+                }
             }
             username_user_map.get(publisher).publishPost(post);
             return true;
@@ -229,11 +246,11 @@ public  class DataBase {
             sendResponse("1006", clientChId);
         else if (success == -1 | success == -3)
             sendResponse("1106", clientChId);
-        else sendResponse("1106@"+elements[0]+" @<username> isn’t applicable for private messages", clientChId); //need to check if response correct ************************************************************
+        else sendResponse("1106 @"+elements[0]+" isn’t applicable for private messages", clientChId); //need to check if response correct ************************************************************
     }
 
     private int personalMessage(String senderUsername, String reciepient, String content){
-        if (!RegisteredAndLoggedIn(senderUsername))
+        if (!RegisteredAndLoggedIn(senderUsername) || senderUsername.equals(reciepient))
             return -1;
         if (!isRegistered(reciepient)) /*If the reciepient user isn’t registered an ERROR message will be returned to the client.
 @<username> isn’t applicable for private messages.*/
@@ -243,8 +260,12 @@ public  class DataBase {
         if (username_user_map.get(reciepient).blockedUsers.contains(senderUsername))
             return -4;
         String filteredContent = filterMessage(content);
-        int reciepient_ChId = username_CHID_map.get(reciepient);
-        sendNotification('0', senderUsername, filteredContent, reciepient_ChId);//sending notification about the pm to receiving client
+        if (isLoggedIn(reciepient)) {
+            username_user_map.get(reciepient).receivePm(new PersonalMessage(senderUsername, filteredContent));
+            int reciepient_ChId = username_CHID_map.get(reciepient);
+            sendNotification('0', senderUsername, filteredContent, reciepient_ChId);//sending notification about the pm to receiving client
+        }
+        else username_user_map.get(reciepient).addDelaymsg(new PersonalMessage(senderUsername, filteredContent));
         return 1;
     }
 
@@ -284,14 +305,16 @@ public  class DataBase {
     //09
     public void sendNotification(char NotificationType, String PostingUser, String content, int clientChId){
         String msg = "09"+NotificationType+PostingUser+'\0'+content+'\0';
+        System.out.println("sending notification " + msg);
         sendResponse(msg, clientChId);
     }
 
     //12
-    public void Block(String requestingUsername, String msg, int clientChId){
+    public void block(String requestingUsername, String msg, int clientChId){
         String[] elements = getElements(msg, '\0', 1);
+        System.out.println("first element(to_block)=  " + elements[0]);
         String toBlock = elements[0];
-        if (RegisteredAndLoggedIn(requestingUsername) && isRegistered(toBlock)){
+        if (!requestingUsername.equals(toBlock) && RegisteredAndLoggedIn(requestingUsername) && isRegistered(toBlock)){
             username_user_map.get(requestingUsername).block(toBlock);
             username_user_map.get(toBlock).block(requestingUsername);
             sendResponse("1012", clientChId);
@@ -314,9 +337,6 @@ public  class DataBase {
     private boolean isRegistered(String username){
         return this.username_pass_map.containsKey(username);
     }
-
-
-
 
     /**
      * @param usersList user to produce their status
@@ -347,10 +367,19 @@ the republic of Lala-land’*/
      * @return the message after it been filtered from illegal words
      */
     public String filterMessage(String message){
+        System.out.println("filtering...");
+        for (String w : illegalWords)
+            System.out.println(w);
         String filtered = message;
-        for (String badWord : illegalWords){
+        System.out.println("after spliting: ");
+        for (String s : filtered.toLowerCase().split(" "))
+            System.out.println(s);
+        for (String wordInContent : filtered.toLowerCase().split(" ")){
             {
-                filtered.replace(badWord, "<filtered>");
+                if (illegalWords.contains(wordInContent)) {
+                    System.out.println(wordInContent);
+                    filtered = filtered.replace(wordInContent, "<filtered>");
+                }
             }
         }
         return filtered;
@@ -381,8 +410,8 @@ the republic of Lala-land’*/
         String out = "database hash: " + this.hashCode()+'\n';
         out += '\t' + "username_CHID_map: " + username_CHID_map.values().size()+ "\n";
         for (String username : username_CHID_map.keySet()){
-            out+= "\t\t" + username+" CHid"+ database.getUsername_CHID_map().get(username);
-            out+= username_user_map.get(username).toString()+"\n\t\t";
+            out+= "\t\t" + username+" CHid "+ database.getUsername_CHID_map().get(username);
+            out+= username_user_map.get(username).toString()+"\n\t";
         }
        return out;
     }

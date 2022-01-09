@@ -4,12 +4,10 @@ public class PersonalMessage {
 
     private String publisher;
     private String msgContent;
-    private String dateAndTime;
 
-    public PersonalMessage(String msg_publisher, String msgContent, String dateAndTime){
+    public PersonalMessage(String msg_publisher, String msgContent){
         this.publisher = msg_publisher;
         this.msgContent = msgContent;
-        this.dateAndTime = dateAndTime;
     }
 
     public String getPublisher() {
@@ -20,7 +18,4 @@ public class PersonalMessage {
         return msgContent;
     }
 
-    public String getDateAndTime() {
-        return dateAndTime;
-    }
 }

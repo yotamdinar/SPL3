@@ -56,6 +56,10 @@ public class messagingProtocolImp implements BidiMessagingProtocol<String> {
             dataBase.produceLOGSTAT(this.user.getUsername(),connectionId);
         if (opcode == 8) //STAT
             dataBase.produceSTAT(this.user.getUsername(), msgBody,connectionId);
+        if (opcode == 12)
+            dataBase.block(this.user.getUsername(), msgBody, connectionId);
+
+        System.out.println(dataBase);
     }
 
 
